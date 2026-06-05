@@ -1,0 +1,18 @@
+import requests
+
+def log(msg):
+    print(f"[LOG] {msg}")
+
+def knapsack(vehicles, capaity):
+    n=(vehicles)
+
+    dp = [0]*(capacity+1)
+    keep=[[False]*(capacity+1) for _ in range(n)]
+    for i in range(n):
+        duration = vehicles[i]["Duration"]
+        impact = vehicles[i]["Impact"]
+
+        for w in range(capacity,duration-1,-1):
+            if dp[w-duration]+impact>dp[w]:
+                dp[w]=dp[w-duration]+impact
+                keep[i][w]=True
