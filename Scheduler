@@ -4,15 +4,43 @@ def log(msg):
     print(f"[LOG] {msg}")
 
 def knapsack(vehicles, capaity):
-    n=(vehicles)
+    n=len(vehicles)
 
     dp = [0]*(capacity+1)
     keep=[[False]*(capacity+1) for _ in range(n)]
     for i in range(n):
-        duration = vehicles[i]["Duration"]
-        impact = vehicles[i]["Impact"]
+        d = vehicles[i]["Duration"]
+        imp = vehicles[i]["Impact"]
 
-        for w in range(capacity,duration-1,-1):
-            if dp[w-duration]+impact>dp[w]:
-                dp[w]=dp[w-duration]+impact
+        for w in range(capacity,d-1,-1):
+            if dp[w-d]+imp>dp[w]:
+                dp[w]=dp[w-d]+imp
                 keep[i][w]=True
+
+    seleted = []
+    w=capacity
+    for i in range(n-1,-1,-1):
+        if keep[i][w]:
+            selected.append(vehicles[i])
+            w-=vehicles[i]["Duration"]
+    return dp[capacity], selected
+
+TOKEN= "YOUR_TOKEN_HERE"
+HEADERS={"Authorization": f"Bearer {TOKEN}"}
+
+def main():
+    log("Fething depots..")
+    depots=requess.get("http://4.224.186.213/evaluation-server/depots", headers=HEADERS).json()["vehicles"]
+    log("Fetching vehicles...")
+    vehicles = requests.get("http://4.224.186.213/evaluation-service/vehicles", headers=HEADERS).json()["vehicles"]
+    log(f"{len(depots)} depots, {len(vehicles)} vehicles")
+ 
+    for depot in depots:
+        max_impact,selected=knapsack(vehicles,depot["MechanicHours"])
+        hours_used=sum(v["Duration"] for v in selected)
+ 
+        print(f"\nDepot {depot['ID']} | budget={depot['MechanicHours']}h | used={hours_used}h | impact={max_impact}")
+        for v in selected:
+            print(f"  {v['TaskID']}")
+if __name:"__main__":
+    main()
