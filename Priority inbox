@@ -1,0 +1,34 @@
+import requests
+from datetime import datetime
+TOKEN = "YOUR_TOKEN_HERE"
+def log(msg):
+    print(f"[LOG] {msg}")
+TYPE_WEIGHT={"Placement":3,"Result":2,"Event":1}
+def get_score(n):
+    weight=TYPE_WEIGHT.get(n["Type"], 1)
+    ts=datetime.strptime(n["Timestamp"],"%Y-%m-%d %H:%M:%S").timestamp()
+    return weight*10**12+ts
+
+def get_top_n(notifications,n):
+    scored=sorted(notifications,key=get_score,reverse=True)
+    return scored[:n]
+
+NOTIFICATIONS = [ {"ID":"d146095a","Type":"Result", "Message":"mid-sem", "Timestamp": "2026-04-22 17:51:30"},
+    {"ID":"b283218f","Type":"Placement","Message": "CSX Corporation hiring", "Timestamp": "2026-04-22 17:51:18"},
+    {"ID":"81589ada","Type":"Event", "Message": "farewell", "Timestamp": "2026-04-22 17:51:06"},
+    {"ID":"0005513a", "Type":"Result","Message": "mid-sem", "Timestamp": "2026-04-22 17:50:54"},
+    {"ID":"ea836726","Type":"Result", "Message": "project-review","Timestamp": "2026-04-22 17:50:42"},
+    {"ID": "003cb427","Type":"Result", "Message": "external", "Timestamp": "2026-04-22 17:50:30"},
+    {"ID": "1cfce5ee", "Type":"Event", "Message": "tech-fest",  "Timestamp": "2026-04-22 17:50:06"},
+    {"ID":"8a7412bd","Type":"Placement","Message": "AMD hiring",   "Timestamp": "2026-04-22 17:49:42"},
+    {"ID": "aaaa0001","Type":"Placement","Message": "Google hiring",  "Timestamp": "2026-04-22 17:52:00"},
+    {"ID":"aaaa0002", "Type":"Placement","Message": "Microsoft hiring", "Timestamp": "2026-04-22 17:48:00"},
+    {"ID":"aaaa0003","Type":"Event","Message": "annual sports day", "Timestamp": "2026-04-22 17:47:00"},
+    {"ID": "aaaa0004", "Type":"Result","Message": "end-sem results", "Timestamp": "2026-04-22 17:53:00"}, ]
+top =get_top_n(NOTIFICATIONS, 10)
+print(f"\n{'='*55}")
+print(f"  TOP 10 PRIORITY NOTIFICATIONS")
+print(f"{'='*55}")
+for i, n in enumerate(top, 1):
+    print(f"  {i}. [{n['Type']}] {n['Message']} — {n['Timestamp']}")
+print(f"{'='*55}")
