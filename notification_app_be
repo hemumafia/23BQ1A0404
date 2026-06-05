@@ -1,26 +1,57 @@
+# notification_system/app.py
+
 from flask import Flask, request, jsonify
 import uuid
 from datetime import datetime
+
 app = Flask(__name__)
 
-def log(masg):
+def log(msg):
     print(f"[LOG] {msg}")
 
-notification = []
+# in-memory list — no database
+notifications = []
 
 @app.route("/notifications",methods=["GET"])
-def get_notificcations():
-    student_id=request.args.get("student_id")
-    notif_type=request.args.get("type")
-    is_read=request.args.get("is_read")
+def get_notifications():
+    student_id = request.args.get("student_id")
+    result = [n for n in notifications if n["student_id"] == student_id]
+    result.sort(key=lambda n: n["created_at"], reverse=True)
+    log(f"GET /notifications student={student_id} -> {len(result)} results")
+    return jsonify({"notifications": result})
 
-    result = notifications[:]
-    if student_id:
-        result=[n for n in result if n["student_id"]==student_id]
-    if notif_type:
-        result=[n for n in result if n["type"]==notif_type]
-    if is_read is not None:
-        result=[n for n in result if n["is_read"]==(is_read=="true")]
+@app.route("/notifications", methods=["POST"])
+def create_notification():
+    body = request.get_json()
+    notif = {
+        "id":str(uuid.uuid4()), "student_id":body["student_id"],"type":body["type"],"message":body["message"], "is_read":False, "created_at":datetime.now().isoformat()}
+    notifications.append(notif)
+    log(f"POST /notifications -> created {notif['id']}")
+    return jsonify(notif), 201
 
-    result.sort(key=lambda n: n["created_at"])
-        
+@app.route("/notifications/<notif_id>/read", methods=["PATCH"])
+def mark_read(notif_id):
+    for n in notifications:
+        if n["id"]==notif_id:
+            n["is_read"]=True
+            log(f"PATCH -> marked {notif_id} as read")
+            return jsonify(n)
+    return jsonify({"error": "not found"}), 404
+
+@app.route("/notifications/<notif_id>", methods=["DELETE"])
+def delete_notification(notif_id):
+    for i, n in enumerate(notifications):
+        if n["id"] == notif_id:
+            notifications.pop(i)
+            log(f"DELETE -> removed {notif_id}")
+            return "", 204
+    return jsonify({"error": "not found"}), 404
+
+@app.route("/notifications/unread-count", methods=["GET"])
+def unread_count():
+    student_id = request.args.get("student_id")
+    count = sum(1 for n in notifications if n["student_id"] == student_id and not n["is_read"])
+    return jsonify({"student_id": student_id, "unread_count": count})
+
+if __name__ == "__main__":
+    app.run(port=5000, debug=True)
